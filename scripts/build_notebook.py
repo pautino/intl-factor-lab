@@ -25,7 +25,7 @@ code('''
 import os, sys, subprocess
 from pathlib import Path
 
-REPO_URL = "https://github.com/YOUR_USER/intl-factor-lab.git"  # <- set after pushing to GitHub
+REPO_URL = "https://github.com/pautino/intl-factor-lab.git"
 
 if "google.colab" in sys.modules and not Path("intl_factors").exists():
     if not Path("intl-factor-lab").exists():

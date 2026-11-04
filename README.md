@@ -5,8 +5,8 @@ Which risks drive the returns of international equity ETFs, and are those risks 
 international ETFs, compares global and regional factor models, measures sensitivity to the US
 dollar, and tests whether exposures were stable over 2006–2026.
 
-**Open in Colab:** `notebooks/international_factor_lab.ipynb` (set `REPO_URL` in the first cell
-after pushing this repo to GitHub).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pautino/intl-factor-lab/blob/main/notebooks/international_factor_lab.ipynb)
+Click the badge, then **Runtime → Run all**. The first cell clones this repo and installs dependencies.
 
 ---
 

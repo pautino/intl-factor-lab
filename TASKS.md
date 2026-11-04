@@ -10,7 +10,7 @@ Legend: `[ ]` open, `[claude]`/`[codex]` claimed, `[x]` done.
 6. [x] `notebooks/international_factor_lab.ipynb`: Colab notebook with section headers, runs end to end
 7. [x] `README.md`: the 15 sections + key results + limitations + references
 8. [x] Run notebook end to end on real data, save figures to `reports/figures/`, write findings into README
-9. [ ] Push to GitHub — needs the user: create an empty GitHub repo, then
+9. [x] Pushed to https://github.com/pautino/intl-factor-lab (public). Original steps:
        `git remote add origin <url> && git push -u origin main`, then replace `REPO_URL` in
        `scripts/build_notebook.py` (setup cell), rebuild + re-execute the notebook, commit, push.
 10. [ ] Test the notebook in real Colab (fresh runtime) after step 9; fix anything Colab-specific.
