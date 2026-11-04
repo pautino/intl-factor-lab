@@ -3,7 +3,9 @@
 Which risks drive the returns of international equity ETFs, and are those risks priced
 **globally** or **locally**? This project estimates Fama–French 5-factor + momentum exposures for six
 international ETFs, compares global and regional factor models, measures sensitivity to the US
-dollar, and tests whether exposures were stable over 2006–2026.
+dollar, and tests whether exposures were stable over 2006–2026. A **Russia case study** rebuilds a
+foreign investor's return from Moscow Exchange data to measure the ruble's drag and how sanctions
+cut Russia off from emerging-market risk pricing.
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pautino/intl-factor-lab/blob/main/notebooks/international_factor_lab.ipynb)
 Click the badge, then **Runtime → Run all**. The first cell clones this repo and installs dependencies.
@@ -58,6 +60,28 @@ Click the badge, then **Runtime → Run all**. The first cell clones this repo a
    statistically significant and no rate data are used to test it. HEFA's 3.2% "alpha" in the
    USD-factor model is not skill: those factors are dollar-denominated, so a hedged fund's dollar
    gains land in the intercept (see `reports/tables/hedged_vs_unhedged.csv`).
+9. **Russia: sanctions turned an emerging market into a closed one.** The US-listed Russia ETFs
+   (RSX, ERUS) were halted in 2022 and Yahoo has deleted their histories, a live case of
+   survivorship bias. Rebuilding a dollar investor's return from the MOEX Russia total-return index
+   and the Moscow Exchange USD/RUB rate (validated against MOEX's own RTS conversion, corr 0.999):
+
+   | Period | Adj. R² on EM factors | EM market beta (t) | Oil beta (t) | Return in RUB | Ruble vs USD | Return in USD |
+   |---|---|---|---|---|---|---|
+   | 2006-02 – 2014-02 | 0.76 | 1.05 (7.1) | 0.19 (2.9) | 5.0% | −3.0% | 1.9% |
+   | 2014-03 – 2022-02 | 0.41 | 0.84 (6.9) | 0.08 (1.0) | 13.2% | −11.8% | −0.1% |
+   | 2022-04 – 2026-09 | −0.02 | 0.17 (0.5) | 0.05 (0.7) | 5.0% | 0.0% | 5.0% |
+
+   - **Decoupling.** Co-movement with emerging markets fell in steps: after Crimea and the first
+     sanctions (2014) and completely after the 2022 invasion, when foreigners were locked out. A
+     market that global investors cannot trade is no longer priced by global risk: segmentation in its
+     extreme form. The 2020 spike in rolling R² is COVID, a global shock that moved all markets together.
+   - **Structural break.** A HAC Wald test rejects stable exposures at March 2014 (χ² = 19.3, p = 0.023).
+     Oil sensitivity beyond the EM market was significant before 2014 and disappeared afterwards.
+   - **The ruble ate the return.** From 2014 to 2022 Russian stocks earned 13.2% a year in rubles but
+     −0.1% in dollars; over the whole investable period (2006–2022) 9.0% in rubles became 0.9% in dollars.
+   - **The exit.** February 2022 cost a dollar investor −44.7% in one month; the March rebound in the
+     index was not available to foreigners, whose holdings were frozen.
+   (See `reports/tables/russia_periods.csv`, `russia_currency.csv`, `reports/figures/09_russia.png`.)
 
 Figures: `reports/figures/`. Tables: `reports/tables/`.
 
@@ -94,8 +118,10 @@ exposures, attribution, rolling betas, a global-vs-local comparison and structur
 | Source | Series | Notes |
 |---|---|---|
 | [Kenneth French Data Library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html) | 5 factors + momentum for Developed, Developed ex US, Europe, Japan, Asia-Pacific ex Japan, North America, Emerging | Monthly, USD, percent → decimals. Vintage used: "202609 Bloomberg database", downloaded 2026-11-04. |
-| Yahoo Finance via `yfinance` | EFA, VGK, EWJ, EPP, EEM, EWZ adjusted close | Adjusted close = total return (dividends reinvested). Personal-use interface. |
+| Yahoo Finance via `yfinance` | EFA, VGK, EWJ, EPP, EEM, EWZ, HEFA, SPY adjusted close | Adjusted close = total return (dividends reinvested). Personal-use interface. |
 | [FRED](https://fred.stlouisfed.org/series/DTWEXBGS) `DTWEXBGS` | Nominal broad US dollar index (daily) | Public CSV endpoint; starts Jan 2006, which sets the model sample start. |
+| [FRED](https://fred.stlouisfed.org/series/DCOILBRENTEU) `DCOILBRENTEU` | Brent crude spot price (daily) | Oil factor for the Russia section. |
+| [Moscow Exchange ISS API](https://iss.moex.com/iss/reference/) | MCFTR (MOEX Russia total return, RUB), IMOEX, RTSI; USD/RUB traded close (to Jun 2013) and MOEX evening USD/RUB fixing (after) | Free public JSON, paginated. Yahoo's RUB=X is unreliable after 2022 and cbr.ru blocks many foreign IPs. |
 
 ## 5. Python libraries
 `numpy`, `pandas`, `scipy`, `statsmodels` (OLS, HAC, RollingOLS, Ljung–Box, Wald), `matplotlib`,
@@ -119,7 +145,7 @@ data/cache/        raw downloads, committed (fixed vintage 2026-11-04; Colab run
 
 ## 7. Step-by-step build guide
 1. `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`
-2. `.venv/bin/python -m pytest -q` (13 tests, offline, synthetic data)
+2. `.venv/bin/python -m pytest -q` (14 tests, offline, synthetic data)
 3. Run the notebook top to bottom (Colab or `jupyter nbconvert --execute --inplace notebooks/international_factor_lab.ipynb`).
 4. To change the notebook, edit `scripts/build_notebook.py`, then `.venv/bin/python scripts/build_notebook.py` and re-execute.
 5. To refresh data, call `data.load_all(refresh=True)` and record the new vintage date in this README.
@@ -159,13 +185,14 @@ cached in `data/cache/` and committed, so the notebook reproduces the README num
 | `06_fitted_vs_realized.png` | Model fit per ETF |
 | `07_cumulative_residuals.png` | Cumulative unexplained return (cost drag, breaks) |
 | `08_hedged_vs_unhedged.png` | HEFA vs EFA wealth and the hedged-minus-unhedged gap vs the dollar |
+| `09_russia.png` | Russian equity growth in RUB vs USD; rolling R² on the EM market (decoupling) |
 
 ## 12. Performance metrics
 Annualized alpha and its HAC t-stat, adjusted R², residual (tracking) volatility, Ljung–Box p-value,
 beta confidence intervals, Wald χ² and p-value for stability, annualized factor contributions.
 
 ## 13. Final deliverables
-Executed Colab notebook, reusable `intl_factors` package, 13 passing tests, 9 figures, 8 CSV
+Executed Colab notebook, reusable `intl_factors` package, 14 passing tests, 10 figures, 10 CSV
 result tables, this README with findings and limitations.
 
 ## 14. Resume description
@@ -178,6 +205,9 @@ result tables, this README with findings and limitations.
 - Detected a structural break in Brazil's dollar exposure (β −0.46 → −2.17, Wald p < 0.001) and
   showed that US last-trading-day news explains 27–44% of unexplained returns, tracing residual
   autocorrelation to non-synchronous market closes across time zones.
+- Rebuilt delisted Russian equity exposure from Moscow Exchange data (survivorship bias in public
+  ETF data) and showed sanctions cut Russia's co-movement with emerging markets from R² 0.76 to ≈0,
+  while ruble depreciation turned 13.2%/yr ruble returns into −0.1%/yr for dollar investors (2014–2022).
 
 ## 15. Potential upgrades
 - Add US-minus-foreign short rates (BIS/ECB/BoJ) to test the HEFA − EFA carry under CIP directly.
@@ -191,7 +221,9 @@ result tables, this README with findings and limitations.
 French factors are built from Bloomberg stock data, not the MSCI indices the ETFs track; ETF returns
 are net of fees and withholding taxes; the USD factor is a non-traded index change (its beta is a
 sensitivity, not a premium); the ETF list was chosen today; all estimates are conditional on the
-model and the 2006–2026 sample.
+model and the 2006–2026 sample. The Russia series is a reconstructed index return (gross dividends,
+no fees or withholding tax), not an investable fund; after February 2022 it describes the domestic
+market only, since foreigners could not trade.
 
 ## References
 Fama & French (2015, 2017) five-factor model and international tests · Griffin (2002) "Are the Fama and

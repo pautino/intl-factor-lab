@@ -183,3 +183,19 @@ def test_hedged_comparison_uses_common_months_and_raw_usd_for_unfunded_gap():
     assert gap_row["ann_mean_return"] == pytest.approx(
         gap_row["alpha_ann"] + gap_row["raw_usd_mean_contribution_ann"])
     assert np.isnan(gap_row["ann_return_geometric"])  # no standalone wealth return for a spread
+
+
+def test_currency_decomposition_identity_and_period_fits():
+    from intl_factors.models import currency_decomposition, period_fits
+    rng = np.random.default_rng(11)
+    idx = pd.period_range("2010-01", periods=120, freq="M")
+    df = pd.DataFrame({"RUS_rub": rng.normal(0.01, 0.05, 120), "RUB_fx": rng.normal(-0.005, 0.03, 120)}, index=idx)
+    df["RUS_usd"] = (1 + df["RUS_rub"]) * (1 + df["RUB_fx"]) - 1
+    out = currency_decomposition(df, {"all": ("2010-01", "2019-12")})
+    row = out.loc["all"]
+    assert 1 + row["equity_in_usd"] == pytest.approx((1 + row["equity_local_ccy"]) * (1 + row["currency_vs_usd"]))
+    ret, f = synthetic(break_at=240)
+    fits = period_fits(align(ret, f), FF6, {"a": ("1985-01", "2004-12"), "b": ("2005-01", "2024-12")})
+    assert fits.loc["a", "beta_Mkt-RF"] == pytest.approx(1.1, abs=0.05)
+    assert fits.loc["b", "beta_Mkt-RF"] == pytest.approx(0.5, abs=0.05)
+    assert fits.loc["a", "n_months"] == 240

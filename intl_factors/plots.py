@@ -154,3 +154,28 @@ def hedged_comparison(common: pd.DataFrame, gap_fit):
     fig.suptitle(f"Currency hedging: {common.index.min()}–{common.index.max()} ({len(common)} months)")
     fig.tight_layout()
     return fig
+
+
+def russia_overview(ru: pd.DataFrame, r2: pd.Series, events: dict[str, str]):
+    """Left: growth of 1 unit in rubles vs dollars (log scale). Right: rolling R² of Russian
+    returns on the EM market factor. Shaded: not investable for foreigners after Feb 2022."""
+    fig, (wealth_ax, r2_ax) = plt.subplots(1, 2, figsize=(11, 4))
+    for i, (col, label) in enumerate([("RUS_rub", "In rubles"), ("RUS_usd", "In US dollars")]):
+        w = (1 + ru[col]).cumprod()
+        wealth_ax.plot(w.index.to_timestamp(), w, label=label, color=COLORS[i])
+    wealth_ax.set_yscale("log")
+    for axis_fmt in (wealth_ax.yaxis.set_major_formatter, wealth_ax.yaxis.set_minor_formatter):
+        axis_fmt(plt.FuncFormatter(lambda v, _: f"{v:g}"))  # plain numbers, not 6×10^0
+    wealth_ax.set_title("MOEX Russia total return index, growth of 1")
+    wealth_ax.legend(fontsize=8)
+    r2_ax.plot(r2.index.to_timestamp(), r2, color=COLORS[2])
+    r2_ax.set_ylim(0, 1)
+    r2_ax.set_title("Rolling 36-month R² on the EM market factor")
+    for ax in (wealth_ax, r2_ax):
+        ax.axvspan(pd.Timestamp("2022-03-01"), ru.index.max().to_timestamp(), color="grey", alpha=0.15)
+        for label, date in events.items():
+            ax.axvline(pd.Timestamp(date), color="black", lw=0.7, ls="--")
+            ax.text(pd.Timestamp(date), ax.get_ylim()[1], f" {label}", fontsize=7, va="top", rotation=90)
+    fig.suptitle("Russia: ruble drag and decoupling from emerging markets (grey = closed to foreigners)")
+    fig.tight_layout()
+    return fig

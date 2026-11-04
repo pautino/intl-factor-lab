@@ -305,7 +305,58 @@ with pd.option_context("display.max_columns", None):
 save(plots.hedged_comparison(hedge_common, hedge_gap_fit), "08_hedged_vs_unhedged")
 ''')
 
-md("## 13. Export tables")
+md("""
+## 13. Russia: sanctions, the ruble and market segmentation
+**Survivorship bias, live.** The US-listed Russia ETFs (RSX, ERUS) were halted in March 2022 and
+Yahoo has since deleted their price histories, so any dataset built from today's tickers silently
+contains no Russia. We rebuild a foreign investor's return from the Moscow Exchange's own public data:
+the **MOEX Russia total return index (MCFTR**, gross dividends, rubles) converted to USD at the MOEX
+USD/RUB rate. After February 2022 foreigners could not trade (the exchange closed 28 Feb – 24 Mar
+2022, then capital controls), so later values describe the *domestic* market only.
+
+Model: local **Emerging** FF6 + USD + **OIL** (Brent spot % change, FRED). USD and OIL are
+orthogonalized against the EM market factor, so their betas measure sensitivity *beyond* the market.
+""")
+code('''
+ru = data.russia_returns()
+oil = data.oil_factor()
+
+# data check: our ruble series vs the conversion MOEX itself uses (RTS index in USD / MOEX index in RUB).
+# Feb-Mar 2022 excluded: the stock market (hence the RTS index) was closed while the ruble kept trading.
+imoex, rtsi = (data.moex_index(s).resample("ME").last() for s in ("IMOEX", "RTSI"))
+implied = (rtsi / imoex).pct_change()
+implied.index = implied.index.to_period("M")
+fx_check = ru[["RUB_fx"]].join(implied.rename("implied"), how="inner").loc["2013-07":].dropna()
+fx_check = fx_check.drop([pd.Period("2022-02", "M"), pd.Period("2022-03", "M")])
+print(f"ruble series vs MOEX-implied rate since Jul 2013: corr = {fx_check.corr().iloc[0, 1]:.4f}")
+assert fx_check.corr().iloc[0, 1] > 0.99
+
+rus = models.orthogonalize(models.align(ru["RUS_usd"], factors["Emerging"], usd).join(oil, how="inner"), "OIL")
+RUS_COLS = models.FF6 + ["USD", "OIL"]
+RUSSIA_PERIODS = {
+    "2006-2014 pre-Crimea": ("2006-02", "2014-02"),
+    "2014-2022 sanctions & oil crash": ("2014-03", "2022-02"),
+    "2022-2026 closed to foreigners": ("2022-04", str(rus.index.max())),
+}
+russia_fits = models.period_fits(rus, RUS_COLS, RUSSIA_PERIODS, report=("Mkt-RF", "USD", "OIL"))
+display(russia_fits)
+
+ru_table, ru_stat, ru_p = models.stability_test(rus.loc[:"2022-02"], RUS_COLS, "2014-03")
+print(f"Crimea / sanctions break (Mar 2014), 2006-02..2022-02: Wald chi2 = {ru_stat:.1f}, p = {ru_p:.3f}")
+display(ru_table.T)
+
+russia_ccy = models.currency_decomposition(
+    ru, {**RUSSIA_PERIODS, "2006-2022 whole investable period": ("2006-02", "2022-02")})
+display(russia_ccy)
+print(f"Invasion month (Feb 2022) in USD: {ru.loc['2022-02', 'RUS_usd']:.1%}")
+
+r2 = (rus["y"].rolling(WINDOW).corr(rus["Mkt-RF"]) ** 2).dropna()
+save(plots.russia_overview(ru.loc["2006-02":], r2,
+                           {"GFC": "2008-09-15", "Crimea": "2014-03-18", "Invasion": "2022-02-24"}),
+     "09_russia")
+''')
+
+md("## 14. Export tables")
 code('''
 summary.to_csv(TAB_DIR / "model_summary.csv")
 pd.concat(coefs, names=["ETF", "term"]).to_csv(TAB_DIR / "coefficients_ff6_usd.csv")
@@ -315,11 +366,13 @@ diag.to_csv(TAB_DIR / "residual_diagnostics.csv")
 stability.to_csv(TAB_DIR / "stability.csv")
 quarterly_robustness.to_csv(TAB_DIR / "quarterly_robustness.csv")
 hedge_summary.to_csv(TAB_DIR / "hedged_vs_unhedged.csv")
+russia_fits.to_csv(TAB_DIR / "russia_periods.csv")
+russia_ccy.to_csv(TAB_DIR / "russia_currency.csv")
 print("Saved tables to", TAB_DIR, "and figures to", FIG_DIR)
 ''')
 
 md("""
-## 14. Limitations
+## 15. Limitations
 - French factors are built from Bloomberg stock data and are not the MSCI indices the ETFs track
   (e.g. `Developed_ex_US` includes Canada, MSCI EAFE does not). Part of each alpha is index mismatch.
 - ETF returns are net of fees and foreign dividend withholding taxes; factor returns are not.

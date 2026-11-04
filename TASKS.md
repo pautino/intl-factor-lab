@@ -13,16 +13,24 @@ Legend: `[ ]` open, `[claude]`/`[codex]` claimed, `[x]` done.
 9. [x] Pushed to https://github.com/pautino/intl-factor-lab (public). Original steps:
        `git remote add origin <url> && git push -u origin main`, then replace `REPO_URL` in
        `scripts/build_notebook.py` (setup cell), rebuild + re-execute the notebook, commit, push.
-10. [ ] Test the notebook in real Colab (fresh runtime) after step 9; fix anything Colab-specific.
+10. [x] Tested in real Colab by the user (fresh runtime): all cells pass.
 11. [ ] Optional upgrades (pick with the user; see README §15). Best value first:
        a. [x] Quarterly-return robustness table (Codex; residual autocorrelation persists).
        b. [codex] Hedged vs unhedged pair (HEFA vs EFA) to measure currency hedging directly.
-       c. Add the user's home-country ETF and more EM countries (INDA, FXI, EWW, EZA).
+       c. [x] Russia section (user's choice, not home country): MOEX MCFTR via ISS API in USD
+          (RUB=X), Brent oil factor, 2014 sanctions break, ruble decomposition, post-2022 segmentation.
 12. [x] Closing-time test: regress residuals on S&P 500 last-trading-day return (t, t-1);
        add to data.py/models.py/tests/notebook §9; fix README finding 6 and resume line.
 
 ## Handoff notes
 (Updated by the agent that stops working. Read this first.)
+
+- Status (Claude Code, 2026-11-04): task 11c COMPLETE as a Russia case study (user's choice).
+  Notebook §13, README finding 9 + resume bullet. Data: MOEX ISS (MCFTR, IMOEX, RTSI, USD/RUB traded
+  close <Jun 2013 then evening fixing "mc"), FRED Brent. All cached + committed. Do NOT use Yahoo
+  RUB=X (wrong after 2022) or RSX/ERUS (deleted). Ruble series validated vs RTSI/IMOEX implied rate
+  (corr 0.9994 since Jul 2013, excl. Feb-Mar 2022 market closure); the notebook asserts this.
+  14/14 tests pass; notebook executes end to end. No open tasks; no active claims.
 
 - Status (Claude Code, 2026-11-04): task 11b COMPLETE (Codex's code, run on the HEFA cache that was
   already in `data/cache/`). README finding 8: HEFA 10.3% vs EFA 6.6% p.a. compound; gap β on raw

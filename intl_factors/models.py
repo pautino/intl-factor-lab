@@ -31,11 +31,42 @@ def align(ret: pd.Series, factors: pd.DataFrame, usd: pd.Series | None = None,
     if usd is not None:
         df = df.join(usd, how="inner")
         if orthogonalize_usd:
-            ok = df[["Mkt-RF", "USD"]].dropna().index
-            proj = sm.OLS(df.loc[ok, "USD"], sm.add_constant(df.loc[ok, "Mkt-RF"])).fit()
-            df.loc[ok, "USD"] = proj.resid
+            df = orthogonalize(df, "USD")
     df["y"] = ret.reindex(df.index) - df["RF"]
     return df.dropna()
+
+
+def orthogonalize(df: pd.DataFrame, col: str, on: str = "Mkt-RF") -> pd.DataFrame:
+    """Replace ``col`` by its residual from an OLS on ``on`` (rows where both exist)."""
+    df = df.copy()
+    ok = df[[on, col]].dropna().index
+    df.loc[ok, col] = sm.OLS(df.loc[ok, col], sm.add_constant(df.loc[ok, on])).fit().resid
+    return df
+
+
+def period_fits(df: pd.DataFrame, cols: list[str], periods: dict,
+                report: tuple[str, ...] = ("Mkt-RF",)) -> pd.DataFrame:
+    """Fit the same model separately on each ``{name: (start, end)}`` period."""
+    rows = {}
+    for name, (start, end) in periods.items():
+        r = fit(df.loc[start:end], cols)
+        row = {"start": start, "end": end, "n_months": int(r.nobs), "adj_r2": r.rsquared_adj}
+        for c in report:
+            row[f"beta_{c}"], row[f"t_{c}"] = r.params[c], r.tvalues[c]
+        rows[name] = row
+    return pd.DataFrame(rows).T
+
+
+def currency_decomposition(df: pd.DataFrame, periods: dict, local: str = "RUS_rub",
+                           fx: str = "RUB_fx", usd: str = "RUS_usd") -> pd.DataFrame:
+    """Annualized (geometric) local-currency return, currency return and USD return per period.
+    (1 + USD) = (1 + local)(1 + FX) holds exactly, monthly and therefore annualized."""
+    rows = {}
+    for name, (start, end) in periods.items():
+        x = df.loc[start:end, [local, fx, usd]]
+        rows[name] = (1 + x).prod() ** (12 / len(x)) - 1
+    return pd.DataFrame(rows).T.rename(columns={local: "equity_local_ccy", fx: "currency_vs_usd",
+                                                usd: "equity_in_usd"})
 
 
 def nw_lags(n: int) -> int:
