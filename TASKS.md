@@ -22,6 +22,25 @@ Legend: `[ ]` open, `[claude]`/`[codex]` claimed, `[x]` done.
 12. [x] Closing-time test: regress residuals on S&P 500 last-trading-day return (t, t-1);
        add to data.py/models.py/tests/notebook §9; fix README finding 6 and resume line.
 
+13. [ ] Codex explains the project to the user (read-only: no file changes). Paste this into Codex:
+
+```
+Read AGENTS.md, TASKS.md and README.md, then the notebook builder scripts/build_notebook.py
+and the result tables in reports/tables/. Do not change any files. You are my tutor for this
+project. I study International Economic Relations (international finance). Explain it in
+plain language, one part at a time, and wait for me to type "next" before moving on:
+1. The question and the data: what an ETF, an excess return and a Fama-French factor are,
+   where each dataset comes from (Ken French, Yahoo, FRED, Moscow Exchange) and why.
+2. How a factor regression works: beta, alpha, R², t-stat and Newey-West errors, using real
+   rows from reports/tables/model_summary.csv and coefficients_ff6_usd.csv as examples.
+3. README findings 1 to 9, one at a time: the number, what it means economically, and the
+   theory it connects to (market integration vs segmentation, the global financial cycle,
+   covered interest parity, sanctions and capital controls).
+4. How the code is organised: intl_factors/data.py, models.py, plots.py, the notebook builder.
+After each part, ask me two short questions to check I understood, and correct my answers.
+Finish with five questions a professor or interviewer would likely ask, with model answers.
+```
+
 ## Handoff notes
 (Updated by the agent that stops working. Read this first.)
 
