@@ -24,6 +24,13 @@ Legend: `[ ]` open, `[claude]`/`[codex]` claimed, `[x]` done.
 ## Handoff notes
 (Updated by the agent that stops working. Read this first.)
 
+- Status (Claude Code, 2026-11-04): task 11b COMPLETE (Codex's code, run on the HEFA cache that was
+  already in `data/cache/`). README finding 8: HEFA 10.3% vs EFA 6.6% p.a. compound; gap β on raw
+  USD 1.02 (t 16, R² 0.78); 3.11% mean gap = 2.16 dollar appreciation + 0.95 intercept (t 1.2).
+  Also: `data/cache/` is now COMMITTED (Colab could not reach FRED); Colab setup cell now refreshes
+  a stale clone (fetch + reset) and only pip-installs missing packages. 13/13 tests pass; notebook
+  executes end to end. No active claims. Remaining: 10 (user re-tests Colab), 11c (home country).
+
 - Active claim (Codex, 2026-11-04): task 11b. Editing `intl_factors/models.py`,
   `intl_factors/plots.py`, `tests/test_models.py`, `scripts/build_notebook.py`, `README.md`,
   the generated notebook, and new hedged/unhedged comparison reports. No rate-data addition planned.

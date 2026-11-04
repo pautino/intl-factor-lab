@@ -48,6 +48,16 @@ Click the badge, then **Runtime → Run all**. The first cell clones this repo a
    insignificant (|t| < 1.2), ruling out slow price adjustment. Betas are unaffected; Newey–West
    errors account for the serial dependence.
 7. **Quarterly robustness:** adjusted R² improves, but residual lag-1 autocorrelation remains −0.33 to −0.20 across 82 complete quarters (2006Q2–2026Q3). This is expected under finding 6: the closing-time mismatch recurs at every quarter-end, so aggregation dilutes it but cannot remove it (see `reports/tables/quarterly_robustness.csv`).
+8. **Currency hedging paid off, mostly because the dollar rose.** Over the 151 months both funds
+   exist (Mar 2014 – Sep 2026), hedged HEFA compounded 10.3% a year vs 6.6% for unhedged EFA, with lower
+   volatility (11.9% vs 14.4%). The monthly gap HEFA − EFA moves one-for-one with the dollar
+   (β = 1.02, t = 16, R² = 0.78): hedging removes the currency loss when the dollar strengthens. Of
+   the 3.11% average annual gap (monthly mean ×12), 2.16 points come from the dollar's appreciation over the sample and
+   0.95 points are left over (t = 1.2). That remainder has the sign and rough size of hedge carry under
+   covered interest parity (US short rates mostly above euro/yen rates), net of costs, but it is not
+   statistically significant and no rate data are used to test it. HEFA's 3.2% "alpha" in the
+   USD-factor model is not skill: those factors are dollar-denominated, so a hedged fund's dollar
+   gains land in the intercept (see `reports/tables/hedged_vs_unhedged.csv`).
 
 Figures: `reports/figures/`. Tables: `reports/tables/`.
 
@@ -109,7 +119,7 @@ data/cache/        raw downloads, committed (fixed vintage 2026-11-04; Colab run
 
 ## 7. Step-by-step build guide
 1. `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`
-2. `.venv/bin/python -m pytest -q` (12 tests, offline, synthetic data)
+2. `.venv/bin/python -m pytest -q` (13 tests, offline, synthetic data)
 3. Run the notebook top to bottom (Colab or `jupyter nbconvert --execute --inplace notebooks/international_factor_lab.ipynb`).
 4. To change the notebook, edit `scripts/build_notebook.py`, then `.venv/bin/python scripts/build_notebook.py` and re-execute.
 5. To refresh data, call `data.load_all(refresh=True)` and record the new vintage date in this README.
@@ -148,13 +158,14 @@ cached in `data/cache/` and committed, so the notebook reproduces the README num
 | `05_attribution.png` | Annualized excess return split into factor contributions + alpha |
 | `06_fitted_vs_realized.png` | Model fit per ETF |
 | `07_cumulative_residuals.png` | Cumulative unexplained return (cost drag, breaks) |
+| `08_hedged_vs_unhedged.png` | HEFA vs EFA wealth and the hedged-minus-unhedged gap vs the dollar |
 
 ## 12. Performance metrics
 Annualized alpha and its HAC t-stat, adjusted R², residual (tracking) volatility, Ljung–Box p-value,
 beta confidence intervals, Wald χ² and p-value for stability, annualized factor contributions.
 
 ## 13. Final deliverables
-Executed Colab notebook, reusable `intl_factors` package, 12 passing tests, 8 figures, 7 CSV
+Executed Colab notebook, reusable `intl_factors` package, 13 passing tests, 9 figures, 8 CSV
 result tables, this README with findings and limitations.
 
 ## 14. Resume description
@@ -169,7 +180,7 @@ result tables, this README with findings and limitations.
   autocorrelation to non-synchronous market closes across time zones.
 
 ## 15. Potential upgrades
-- Currency-hedged ETF pairs (e.g. HEFA vs EFA) to measure the hedge's realized effect directly.
+- Add US-minus-foreign short rates (BIS/ECB/BoJ) to test the HEFA − EFA carry under CIP directly.
 - Local-currency factor returns (French factors × FX) to separate equity and currency premia.
 - Add country funds for your home market and more EM countries (INDA, FXI, EWW, EZA).
 - Out-of-sample test: do rolling exposures predict next-year risk better than full-sample ones?

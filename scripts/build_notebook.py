@@ -28,10 +28,19 @@ from pathlib import Path
 REPO_URL = "https://github.com/pautino/intl-factor-lab.git"
 
 if "google.colab" in sys.modules and not Path("intl_factors").exists():
-    if not Path("intl-factor-lab").exists():
+    if Path("intl-factor-lab").exists():
+        # refresh a copy left by an earlier session; it only holds regenerated outputs
+        subprocess.run("git -C intl-factor-lab fetch -q && git -C intl-factor-lab reset -q --hard origin/main",
+                       shell=True, check=True)
+    else:
         subprocess.run(["git", "clone", "-q", REPO_URL, "intl-factor-lab"], check=True)
     os.chdir("intl-factor-lab")
-    subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-U", "yfinance", "statsmodels"], check=True)
+    # Colab preinstalls these; install only if missing (upgrading can break preloaded packages)
+    for pkg in ("yfinance", "statsmodels"):
+        try:
+            __import__(pkg)
+        except ImportError:
+            subprocess.run([sys.executable, "-m", "pip", "install", "-q", pkg], check=True)
 
 ROOT = Path.cwd() if Path("intl_factors").exists() else Path.cwd().parent
 sys.path.insert(0, str(ROOT))
