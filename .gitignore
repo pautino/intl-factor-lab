@@ -2,7 +2,6 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-data/cache/
 .pytest_cache/
 .DS_Store
 .claude/

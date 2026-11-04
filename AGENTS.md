@@ -18,7 +18,7 @@ Project: **International Factor Exposure & Return Attribution Lab** (idea #02 fr
 - All factor and ETF returns are in **USD**; RF is the US 1-month T-bill from the French files.
 - Regressions use Newey-West (HAC) standard errors.
 - Tests: `.venv/bin/python -m pytest -q` must pass before marking a task done.
-- Downloaded data is cached in `data/cache/` (gitignored).
+- Downloaded data is cached in `data/cache/` and COMMITTED (fixed vintage; Colab often cannot reach Yahoo). Only refresh with the user's approval, then update README numbers.
 
 ## Environment
 - Local: `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`

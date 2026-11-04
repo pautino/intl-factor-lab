@@ -104,7 +104,7 @@ scripts/
 tests/
   test_models.py   parser + synthetic-data tests (known betas recovered, attribution sums, breaks detected)
 reports/figures/   PNG charts      reports/tables/   CSV results
-data/cache/        downloaded raw files (gitignored)
+data/cache/        raw downloads, committed (fixed vintage 2026-11-04; Colab runs offline)
 ```
 
 ## 7. Step-by-step build guide
@@ -117,7 +117,7 @@ data/cache/        downloaded raw files (gitignored)
 ## 8. Data collection pipeline
 `data.load_all()` → for each region download `{Region}_5_Factors_CSV.zip` and
 `{Region}_Mom_Factor_CSV.zip`, ETF adjusted closes and the FRED dollar index. Every raw download is
-cached in `data/cache/`; network errors raise a clear `RuntimeError` naming the URL.
+cached in `data/cache/` and committed, so the notebook reproduces the README numbers without network access; `refresh=True` re-downloads. Network errors raise a clear `RuntimeError` naming the URL.
 
 ## 9. Data cleaning & feature engineering
 - Ken French parser keeps only the monthly block, converts percent → decimal, maps −99.99 → NaN.
