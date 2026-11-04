@@ -38,11 +38,16 @@ after pushing this repo to GitHub).
 5. **Alpha is mostly cost.** All alphas are negative; only EFA's (−1.2% p.a.) is significant. Expense
    ratios, foreign dividend withholding tax and index mismatch (French's `Developed_ex_US` includes
    Canada; MSCI EAFE does not) explain it. No evidence of skill or mispricing.
-6. **Month-end timing reverses.** Residual lag-1 autocorrelation is −0.27 to −0.41 for funds holding
-   Asian/European stocks but only −0.11 for EWZ (Brazil trades in New York hours). A lagged-market
-   (Dimson) term is insignificant (|t| < 1.2), consistent with a closing-time mismatch rather than slow
-   price adjustment. Newey–West errors account for serial dependence in inference.
-7. **Quarterly robustness:** adjusted R² improves, but residual lag-1 autocorrelation remains −0.33 to −0.20 across 82 complete quarters (2006Q2–2026Q3); aggregation does not eliminate the reversal or establish its cause (see `reports/tables/quarterly_robustness.csv`).
+6. **Month-end timing reverses, because markets close at different times.** Residual lag-1
+   autocorrelation is −0.27 to −0.41 for funds holding Asian/European stocks but only −0.11 for EWZ.
+   Direct test: the S&P 500's return on the month's last trading day explains 27–44% of residual
+   variance, loading **positively** this month and **negatively** next month (|t| = 5–9), as the
+   US-listed ETF prices late US-hours news one month before the local factor does. The loading
+   scales with the time-zone gap: ≈0.5 for Asia (closed during the whole NY session), 0.2–0.3 for
+   Europe (overlaps the NY morning), insignificant for Brazil. A lagged-market (Dimson) term is
+   insignificant (|t| < 1.2), ruling out slow price adjustment. Betas are unaffected; Newey–West
+   errors account for the serial dependence.
+7. **Quarterly robustness:** adjusted R² improves, but residual lag-1 autocorrelation remains −0.33 to −0.20 across 82 complete quarters (2006Q2–2026Q3). This is expected under finding 6: the closing-time mismatch recurs at every quarter-end, so aggregation dilutes it but cannot remove it (see `reports/tables/quarterly_robustness.csv`).
 
 Figures: `reports/figures/`. Tables: `reports/tables/`.
 
@@ -104,7 +109,7 @@ data/cache/        downloaded raw files (gitignored)
 
 ## 7. Step-by-step build guide
 1. `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`
-2. `.venv/bin/python -m pytest -q` (11 tests, offline, synthetic data)
+2. `.venv/bin/python -m pytest -q` (12 tests, offline, synthetic data)
 3. Run the notebook top to bottom (Colab or `jupyter nbconvert --execute --inplace notebooks/international_factor_lab.ipynb`).
 4. To change the notebook, edit `scripts/build_notebook.py`, then `.venv/bin/python scripts/build_notebook.py` and re-execute.
 5. To refresh data, call `data.load_all(refresh=True)` and record the new vintage date in this README.
@@ -130,7 +135,8 @@ cached in `data/cache/`; network errors raise a clear `RuntimeError` naming the 
 - **Return attribution:** mean excess return = α + Σ βₖ·E[fₖ] (exact in-sample identity).
 - **Global vs local:** same FF6 specification with Developed vs regional factors.
 - **Stability:** Chow-type HAC Wald test of equal α and β before/after Jan 2016.
-- **Diagnostics:** Ljung–Box(12), residual autocorrelation, Dimson lagged-market test.
+- **Diagnostics:** Ljung–Box(12), residual autocorrelation, Dimson lagged-market test, closing-time
+  test (residuals on S&P 500 last-trading-day returns at t and t−1).
 
 ## 11. Visualizations
 | File | Shows |
@@ -148,7 +154,7 @@ Annualized alpha and its HAC t-stat, adjusted R², residual (tracking) volatilit
 beta confidence intervals, Wald χ² and p-value for stability, annualized factor contributions.
 
 ## 13. Final deliverables
-Executed Colab notebook, reusable `intl_factors` package, 11 passing tests, 8 figures, 7 CSV
+Executed Colab notebook, reusable `intl_factors` package, 12 passing tests, 8 figures, 7 CSV
 result tables, this README with findings and limitations.
 
 ## 14. Resume description
@@ -159,7 +165,8 @@ result tables, this README with findings and limitations.
   factors, evidence of partial market segmentation; documented significant dollar sensitivity for
   Asian and emerging-market equities.
 - Detected a structural break in Brazil's dollar exposure (β −0.46 → −2.17, Wald p < 0.001) and
-  traced residual autocorrelation to non-synchronous market closes using a Dimson lag test.
+  showed that US last-trading-day news explains 27–44% of unexplained returns, tracing residual
+  autocorrelation to non-synchronous market closes across time zones.
 
 ## 15. Potential upgrades
 - Currency-hedged ETF pairs (e.g. HEFA vs EFA) to measure the hedge's realized effect directly.

@@ -18,9 +18,19 @@ Legend: `[ ]` open, `[claude]`/`[codex]` claimed, `[x]` done.
        a. [x] Quarterly-return robustness table (Codex; residual autocorrelation persists).
        b. Hedged vs unhedged pair (HEFA vs EFA) to measure currency hedging directly.
        c. Add the user's home-country ETF and more EM countries (INDA, FXI, EWW, EZA).
+12. [x] Closing-time test: regress residuals on S&P 500 last-trading-day return (t, t-1);
+       add to data.py/models.py/tests/notebook §9; fix README finding 6 and resume line.
 
 ## Handoff notes
 (Updated by the agent that stops working. Read this first.)
+
+- Status (Claude Code, 2026-11-04, after Codex 11a): task 12 COMPLETE. The closing-time cause is
+  now CONFIRMED, not tentative: residuals load +0.2…+0.6 on the S&P 500 last-trading-day return
+  of month t and −0.3…−0.6 on month t−1 (|t| 5–9, 27–44% of residual variance), scaling with
+  time-zone gap; EWZ ≈ 0. Quarterly persistence (11a) is expected: the mismatch recurs at every
+  quarter-end. `data.last_day_returns`, `models.closing_time_test`, notebook §9, README findings
+  6–7 and §14 updated. 12/12 tests pass; notebook executes end to end.
+  Remaining: tasks 9 (user pushes to GitHub), 10, 11b, 11c.
 
 - Status (Codex, 2026-11-04): task 11a COMPLETE. New notebook §10 compares local FF6+USD
   fits on 246 months / 82 complete quarters (2006Q2–2026Q3); results are exported to

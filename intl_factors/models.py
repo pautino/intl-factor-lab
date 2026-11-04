@@ -192,3 +192,18 @@ def stability_test(df: pd.DataFrame, cols: list[str], split: str):
     table = pd.DataFrame({"pre": pre, "post": pre + res.params.iloc[k:].to_numpy()},
                          index=X.columns)
     return table, float(np.squeeze(w.statistic)), float(np.squeeze(w.pvalue))
+
+
+def closing_time_test(resid: pd.Series, gap: pd.Series) -> dict:
+    """Non-synchronous close test: regress model residuals on the US last-trading-day
+    return of month t and t-1 (HAC errors).
+
+    If the US-listed ETF prices end-of-month US-hours news that the local factor only
+    prices next month, the loading is positive on gap_t and negative on gap_t-1."""
+    X = pd.DataFrame({"gap_t": gap, "gap_t-1": gap.shift(1)}).reindex(resid.index).dropna()
+    e = resid.loc[X.index]
+    r = sm.OLS(e, sm.add_constant(X)).fit(cov_type="HAC", cov_kwds={"maxlags": nw_lags(len(X))})
+    return {"gap_t": r.params["gap_t"], "gap_t_t": r.tvalues["gap_t"],
+            "gap_t-1": r.params["gap_t-1"], "gap_t-1_t": r.tvalues["gap_t-1"],
+            "resid_r2_explained": r.rsquared,
+            "ac1_before": e.autocorr(1), "ac1_after": r.resid.autocorr(1)}

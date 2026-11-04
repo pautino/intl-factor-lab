@@ -185,22 +185,28 @@ md("""
 - **Fitted vs realized**: how close points lie to the 45° line.
 - **Cumulative alpha + residual**: a steady downward drift is a cost the factors do not capture
   (expense ratio, dividend withholding tax, index differences).
-- **Residual autocorrelation**: negative lag-1 autocorrelation means a one-day timing mismatch (ETFs
-  are priced at the New York close; local factors at local market closes) that reverses next month.
-  A lagged market term tests the alternative explanation of slow price adjustment.
+- **Residual autocorrelation**: ETFs are priced at the New York close, local factors at local
+  market closes. News arriving in US hours on a month's last day enters the ETF this month but the
+  local factor next month, so residuals reverse (negative lag-1 autocorrelation).
+- **Closing-time test**: regress residuals on the S&P 500 (SPY) return on the last trading day of
+  month *t* and *t−1*. The hypothesis predicts a positive then a negative loading, larger for Asia
+  (closed for the whole NY session) than Europe (overlaps the NY morning) and ~0 for Brazil.
+- A lagged market term tests the alternative explanation of slow price adjustment.
 """)
 code('''
 best = {t: (fits[t]["FF6+USD"], aligned[t]) for t in ETFS}
 save(plots.fitted_vs_realized(best), "06_fitted_vs_realized")
 save(plots.cumulative_residuals(best), "07_cumulative_residuals")
 
+gap = data.last_day_returns("SPY")
 rows = {}
 for t in ETFS:
     res, d = best[t]
     lagged = d.assign(Mkt_lag=d["Mkt-RF"].shift(1)).dropna()
     r_lag = models.fit(lagged, models.FF6 + ["USD", "Mkt_lag"])
     rows[t] = {"resid_ac1": res.resid.autocorr(1), "resid_ac2": res.resid.autocorr(2),
-               "lagged_mkt_beta": r_lag.params["Mkt_lag"], "lagged_mkt_t": r_lag.tvalues["Mkt_lag"]}
+               "lagged_mkt_beta": r_lag.params["Mkt_lag"], "lagged_mkt_t": r_lag.tvalues["Mkt_lag"],
+               **models.closing_time_test(res.resid, gap)}
 diag = pd.DataFrame(rows).T
 display(diag)
 ''')

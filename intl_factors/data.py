@@ -97,9 +97,8 @@ def _drop_partial_month(s: pd.DataFrame | pd.Series) -> pd.DataFrame | pd.Series
     return s[s.index < pd.Timestamp.today().to_period("M")]
 
 
-def etf_returns(tickers: list[str], start: str = "2005-01-01",
-                refresh: bool = False) -> pd.DataFrame:
-    """Monthly total returns (dividends reinvested via Yahoo adjusted close)."""
+def _closes(tickers: list[str], start: str, refresh: bool) -> pd.DataFrame:
+    """Daily adjusted closes (total return) from Yahoo, cached per ticker set."""
     import yfinance as yf  # imported lazily: only needed when not cached
 
     path = CACHE / f"etf_close_{'_'.join(sorted(tickers))}.csv"
@@ -116,11 +115,28 @@ def etf_returns(tickers: list[str], start: str = "2005-01-01",
     missing = set(tickers) - set(close.columns)
     if missing:
         raise RuntimeError(f"No price data for {sorted(missing)}")
-    monthly = close[tickers].resample("ME").last()
+    return close[tickers]
+
+
+def etf_returns(tickers: list[str], start: str = "2005-01-01",
+                refresh: bool = False) -> pd.DataFrame:
+    """Monthly total returns (dividends reinvested via Yahoo adjusted close)."""
+    monthly = _closes(tickers, start, refresh).resample("ME").last()
     # fill_method=None: never invent returns across gaps or before inception
     rets = monthly.pct_change(fill_method=None)
     rets.index = rets.index.to_period("M")
     return _drop_partial_month(rets).iloc[1:]
+
+
+def last_day_returns(ticker: str = "SPY", start: str = "2005-01-01",
+                     refresh: bool = False) -> pd.Series:
+    """Daily return of ``ticker`` on each month's last trading day.
+
+    Proxy for US-hours news that arrives after Asian/European markets have closed: the
+    US-listed ETF prices it this month, the local factor only next month."""
+    daily = _closes([ticker], start, refresh)[ticker].pct_change(fill_method=None)
+    last = daily.groupby(daily.index.to_period("M")).last()
+    return _drop_partial_month(last).dropna().rename(f"{ticker}_last_day")
 
 
 def usd_factor(refresh: bool = False) -> pd.Series:

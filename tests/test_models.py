@@ -86,6 +86,18 @@ def test_orthogonal_usd_keeps_usd_beta_and_fit():
     assert orth.rsquared == pytest.approx(raw.rsquared)
 
 
+def test_closing_time_test_recovers_reversal_loadings():
+    from intl_factors.models import closing_time_test
+    rng = np.random.default_rng(3)
+    idx = pd.period_range("2000-01", periods=300, freq="M")
+    gap = pd.Series(rng.normal(0, 0.01, 300), index=idx)
+    resid = 0.5 * gap - 0.5 * gap.shift(1) + rng.normal(0, 0.002, 300)
+    out = closing_time_test(resid.dropna(), gap)
+    assert out["gap_t"] == pytest.approx(0.5, abs=0.05)
+    assert out["gap_t-1"] == pytest.approx(-0.5, abs=0.05)
+    assert out["ac1_before"] < -0.3 and abs(out["ac1_after"]) < 0.15
+
+
 def test_nw_lags():
     assert nw_lags(100) == 4
     assert nw_lags(240) == 4
