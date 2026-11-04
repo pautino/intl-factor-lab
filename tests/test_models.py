@@ -4,7 +4,8 @@ import pytest
 
 from intl_factors.data import parse_french_csv
 from intl_factors.models import (FF6, align, attribution, contributions, fit,
-                                 nw_lags, rolling_betas, stability_test)
+                                 nw_lags, quarterly_returns, quarterly_robustness,
+                                 rolling_betas, stability_test)
 
 SAMPLE = """This file was created using the 202609 Bloomberg database.
 
@@ -88,3 +89,59 @@ def test_orthogonal_usd_keeps_usd_beta_and_fit():
 def test_nw_lags():
     assert nw_lags(100) == 4
     assert nw_lags(240) == 4
+
+
+def test_quarterly_returns_compounds_total_returns_before_subtracting_rf():
+    idx = pd.period_range("2020-01", periods=8, freq="M")
+    df = pd.DataFrame(0.0, index=idx, columns=FF6 + ["RF", "USD", "y"])
+    df["RF"], df["Mkt-RF"], df["SMB"] = 0.01, 0.02, 0.1
+    df.loc["2020-01":"2020-03", "y"] = [0.09, -0.06, 0.01]
+    df.loc["2020-01":"2020-03", "USD"] = [0.1, -0.05, 0.02]
+    q = quarterly_returns(df)
+    assert list(q.index) == list(pd.period_range("2020Q1", "2020Q2", freq="Q-DEC"))
+    assert q.loc["2020Q1", "RF"] == pytest.approx(1.01 ** 3 - 1)
+    assert q.loc["2020Q1", "y"] == pytest.approx(1.10 * 0.95 * 1.02 - 1.01 ** 3)
+    assert q.loc["2020Q1", "Mkt-RF"] == pytest.approx(1.03 ** 3 - 1.01 ** 3)
+    assert q.loc["2020Q1", "USD"] == pytest.approx(1.10 * 0.95 * 1.02 - 1)
+    assert q.loc["2020Q1", "SMB"] == pytest.approx(0.3)  # fixed-notional spread payoffs
+
+
+def test_quarterly_returns_drops_quarters_with_missing_months_or_inputs():
+    ret, factors = synthetic(n=12)
+    usd = pd.Series(0.01, index=ret.index, name="USD")
+    raw = align(ret, factors, usd, orthogonalize_usd=False)
+    raw.loc["1985-05", "HML"] = np.nan
+    raw = raw.drop(pd.Period("1985-08", "M"))
+    q = quarterly_returns(raw.iloc[::-1])  # input order must not change calendar grouping
+    assert list(q.index) == [pd.Period("1985Q1", "Q-DEC"), pd.Period("1985Q4", "Q-DEC")]
+
+
+def test_quarterly_robustness_matches_calendar_samples_and_annualization():
+    ret, factors = synthetic()
+    rng = np.random.default_rng(7)
+    usd = pd.Series(-0.6 * factors["Mkt-RF"] + rng.normal(0, 0.02, len(ret)),
+                    index=ret.index, name="USD")
+    ret = ret.iloc[1:-1]  # leave both boundary quarters incomplete
+    table = quarterly_robustness(ret, factors, usd)
+    monthly, quarterly = table.loc["monthly"], table.loc["quarterly"]
+    assert monthly["n_obs"] == 3 * quarterly["n_obs"] == 474
+    assert monthly["start"] == "1985-04" and monthly["end"] == "2024-09"
+    assert quarterly["start"] == "1985Q2" and quarterly["end"] == "2024Q3"
+    assert monthly["ljung_box_lags"] == 12 and quarterly["ljung_box_lags"] == 4
+    q = quarterly_returns(align(ret, factors, usd, orthogonalize_usd=False))
+    d = align(q["y"] + q["RF"], q[FF6 + ["RF"]], q["USD"])
+    assert abs(d["USD"].corr(d["Mkt-RF"])) < 1e-10
+    res = fit(d, FF6 + ["USD"])
+    assert quarterly["alpha_ann"] == pytest.approx(res.params["const"] * 4)
+    assert quarterly["alpha_t"] == pytest.approx(res.tvalues["const"])
+    assert quarterly["resid_ac1"] == pytest.approx(res.resid.autocorr(1))
+
+
+def test_quarterly_returns_rejects_duplicate_months_and_no_complete_quarters():
+    ret, factors = synthetic(n=3)
+    usd = pd.Series(0.01, index=ret.index, name="USD")
+    raw = align(ret, factors, usd, orthogonalize_usd=False)
+    with pytest.raises(ValueError, match="unique months"):
+        quarterly_returns(pd.concat([raw, raw.iloc[:1]]))
+    with pytest.raises(ValueError, match="No complete calendar quarters"):
+        quarterly_returns(raw.iloc[:2])

@@ -205,8 +205,35 @@ diag = pd.DataFrame(rows).T
 display(diag)
 ''')
 
+md("""
+## 10. Quarterly-return robustness
+Compare monthly and quarterly **local FF6 + USD** regressions over the same complete calendar
+quarters; incomplete quarters and quarters with missing inputs are excluded from both fits.
+
+- Compound ETF total returns, RF, and total market returns separately, then subtract quarterly RF
+  from ETF and market returns. Compound the raw USD index changes before re-orthogonalizing USD
+  against the market separately at each frequency on the matched sample.
+- Sum monthly SMB/HML/RMW/CMA/MOM spreads as fixed-notional long-short payoffs. Compounded
+  underlying long/short leg returns cannot be recovered from the monthly spreads alone.
+- Annualize alpha arithmetically by ×12 (monthly) or ×4 (quarterly); both fits use Newey–West errors.
+  Ljung–Box tests cover one year: 12 monthly lags or 4 quarterly lags. Lag-1 correlations measure
+  different horizons (one month versus one quarter).
+
+The table checks whether coarser sampling reduces the timing reversal; a lower residual correlation
+does not establish its cause, and quarterly aggregation need not eliminate it. These descriptive
+fits also differ through aggregation conventions and the smaller quarterly sample.
+""")
+code('''
+quarterly_robustness = pd.concat({
+    t: models.quarterly_robustness(rets[t], factors[region], usd)
+    for t, (_, region) in ETFS.items()
+}, names=["ETF", "frequency"])
+with pd.option_context("display.max_columns", None):
+    display(quarterly_robustness)
+''')
+
 md(f"""
-## 10. Stability: did exposures change?
+## 11. Stability: did exposures change?
 HAC Wald test that alpha and all betas are equal before and after the split month (Chow-type test).
 """)
 code('''
@@ -221,7 +248,7 @@ stability = pd.DataFrame(stab_rows).T
 display(stability)
 ''')
 
-md("## 11. Export tables")
+md("## 12. Export tables")
 code('''
 summary.to_csv(TAB_DIR / "model_summary.csv")
 pd.concat(coefs, names=["ETF", "term"]).to_csv(TAB_DIR / "coefficients_ff6_usd.csv")
@@ -229,11 +256,12 @@ gvl.to_csv(TAB_DIR / "global_vs_local.csv")
 attr.to_csv(TAB_DIR / "attribution.csv")
 diag.to_csv(TAB_DIR / "residual_diagnostics.csv")
 stability.to_csv(TAB_DIR / "stability.csv")
+quarterly_robustness.to_csv(TAB_DIR / "quarterly_robustness.csv")
 print("Saved tables to", TAB_DIR, "and figures to", FIG_DIR)
 ''')
 
 md("""
-## 12. Limitations
+## 13. Limitations
 - French factors are built from Bloomberg stock data and are not the MSCI indices the ETFs track
   (e.g. `Developed_ex_US` includes Canada, MSCI EAFE does not). Part of each alpha is index mismatch.
 - ETF returns are net of fees and foreign dividend withholding taxes; factor returns are not.

@@ -40,8 +40,9 @@ after pushing this repo to GitHub).
    Canada; MSCI EAFE does not) explain it. No evidence of skill or mispricing.
 6. **Month-end timing reverses.** Residual lag-1 autocorrelation is −0.27 to −0.41 for funds holding
    Asian/European stocks but only −0.11 for EWZ (Brazil trades in New York hours). A lagged-market
-   (Dimson) term is insignificant (|t| < 1.2), so this is a one-day closing-time mismatch, not slow
-   price adjustment. Betas are unaffected; Newey–West errors account for it.
+   (Dimson) term is insignificant (|t| < 1.2), consistent with a closing-time mismatch rather than slow
+   price adjustment. Newey–West errors account for serial dependence in inference.
+7. **Quarterly robustness:** adjusted R² improves, but residual lag-1 autocorrelation remains −0.33 to −0.20 across 82 complete quarters (2006Q2–2026Q3); aggregation does not eliminate the reversal or establish its cause (see `reports/tables/quarterly_robustness.csv`).
 
 Figures: `reports/figures/`. Tables: `reports/tables/`.
 
@@ -103,7 +104,7 @@ data/cache/        downloaded raw files (gitignored)
 
 ## 7. Step-by-step build guide
 1. `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`
-2. `.venv/bin/python -m pytest -q` (7 tests, offline, synthetic data)
+2. `.venv/bin/python -m pytest -q` (11 tests, offline, synthetic data)
 3. Run the notebook top to bottom (Colab or `jupyter nbconvert --execute --inplace notebooks/international_factor_lab.ipynb`).
 4. To change the notebook, edit `scripts/build_notebook.py`, then `.venv/bin/python scripts/build_notebook.py` and re-execute.
 5. To refresh data, call `data.load_all(refresh=True)` and record the new vintage date in this README.
@@ -147,7 +148,7 @@ Annualized alpha and its HAC t-stat, adjusted R², residual (tracking) volatilit
 beta confidence intervals, Wald χ² and p-value for stability, annualized factor contributions.
 
 ## 13. Final deliverables
-Executed Colab notebook, reusable `intl_factors` package, 7 passing tests, 8 figures, 6 CSV
+Executed Colab notebook, reusable `intl_factors` package, 11 passing tests, 8 figures, 7 CSV
 result tables, this README with findings and limitations.
 
 ## 14. Resume description
@@ -161,7 +162,6 @@ result tables, this README with findings and limitations.
   traced residual autocorrelation to non-synchronous market closes using a Dimson lag test.
 
 ## 15. Potential upgrades
-- Quarterly-return robustness check to remove the month-end timing reversal entirely.
 - Currency-hedged ETF pairs (e.g. HEFA vs EFA) to measure the hedge's realized effect directly.
 - Local-currency factor returns (French factors × FX) to separate equity and currency premia.
 - Add country funds for your home market and more EM countries (INDA, FXI, EWW, EZA).
