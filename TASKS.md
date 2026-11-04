@@ -41,9 +41,15 @@ After each part, ask me two short questions to check I understood, and correct m
 Finish with five questions a professor or interviewer would likely ask, with model answers.
 ```
 
+14. [codex] Remove Claude co-author credit from published commit messages; prepare a local
+    backup and cleaned branch, verify file trees are preserved, then publish the history rewrite.
+
 ## Handoff notes
 (Updated by the agent that stops working. Read this first.)
 
+- Active claim (Codex, 2026-11-04): task 14. Editing only `AGENTS.md` / `TASKS.md` for
+  attribution policy and coordination, and preparing Git metadata on a separate cleanup branch.
+  Publishing requires a force push; GitHub DNS remains unavailable in this shell.
 - Status (Claude Code, 2026-11-04): task 11c COMPLETE as a Russia case study (user's choice).
   Notebook §13, README finding 9 + resume bullet. Data: MOEX ISS (MCFTR, IMOEX, RTSI, USD/RUB traded
   close <Jun 2013 then evening fixing "mc"), FRED Brent. All cached + committed. Do NOT use Yahoo

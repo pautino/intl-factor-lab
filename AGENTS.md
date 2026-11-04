@@ -8,6 +8,7 @@ Project: **International Factor Exposure & Return Attribution Lab** (idea #02 fr
   read `TASKS.md`, claim a task by writing `[codex]` or `[claude]` next to it, and
   mark it `[x]` when done. Never edit a file another agent has an open claim on.
 - Commit small and often (`git add -A && git commit -m "..."`) so work is never lost.
+- Do not add Claude or Anthropic `Co-Authored-By` trailers to commit messages.
 - Handoff notes for whoever continues live at the bottom of `TASKS.md`.
 
 ## Code conventions
