@@ -16,7 +16,7 @@ Legend: `[ ]` open, `[claude]`/`[codex]` claimed, `[x]` done.
 10. [ ] Test the notebook in real Colab (fresh runtime) after step 9; fix anything Colab-specific.
 11. [ ] Optional upgrades (pick with the user; see README §15). Best value first:
        a. [x] Quarterly-return robustness table (Codex; residual autocorrelation persists).
-       b. Hedged vs unhedged pair (HEFA vs EFA) to measure currency hedging directly.
+       b. [codex] Hedged vs unhedged pair (HEFA vs EFA) to measure currency hedging directly.
        c. Add the user's home-country ETF and more EM countries (INDA, FXI, EWW, EZA).
 12. [x] Closing-time test: regress residuals on S&P 500 last-trading-day return (t, t-1);
        add to data.py/models.py/tests/notebook §9; fix README finding 6 and resume line.
@@ -24,6 +24,9 @@ Legend: `[ ]` open, `[claude]`/`[codex]` claimed, `[x]` done.
 ## Handoff notes
 (Updated by the agent that stops working. Read this first.)
 
+- Active claim (Codex, 2026-11-04): task 11b. Editing `intl_factors/models.py`,
+  `intl_factors/plots.py`, `tests/test_models.py`, `scripts/build_notebook.py`, `README.md`,
+  the generated notebook, and new hedged/unhedged comparison reports. No rate-data addition planned.
 - Status (Claude Code, 2026-11-04, after Codex 11a): task 12 COMPLETE. The closing-time cause is
   now CONFIRMED, not tentative: residuals load +0.2…+0.6 on the S&P 500 last-trading-day return
   of month t and −0.3…−0.6 on month t−1 (|t| 5–9, 27–44% of residual variance), scaling with
