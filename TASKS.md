@@ -27,6 +27,16 @@ Legend: `[ ]` open, `[claude]`/`[codex]` claimed, `[x]` done.
 - Active claim (Codex, 2026-11-04): task 11b. Editing `intl_factors/models.py`,
   `intl_factors/plots.py`, `tests/test_models.py`, `scripts/build_notebook.py`, `README.md`,
   the generated notebook, and new hedged/unhedged comparison reports. No rate-data addition planned.
+  Implementation ready: matched-sample EFA/HEFA metrics, FF6+USD fits, raw-USD-only gap fit,
+  CIP explanation, one two-panel chart, and CSV export in new notebook §12. 13/13 tests pass.
+  Pending external dependency: this shell cannot resolve Yahoo or GitHub. The required new cache
+  `data/cache/etf_close_EFA_HEFA.csv` is absent; no real-data results have been fabricated.
+  To populate it in a network-enabled terminal, run from the repo root:
+  `.venv/bin/python -c 'from intl_factors import data; data.etf_returns(["EFA", "HEFA"])'`.
+  Then add the actual README finding (and update deliverable/test counts), rebuild the notebook,
+  execute all cells, inspect `08_hedged_vs_unhedged.png` / `hedged_vs_unhedged.csv`, and push.
+  The previously executed notebook has been preserved until the new input data are available.
+  Task 11b remains claimed, not done; the source implementation is committed separately.
 - Status (Claude Code, 2026-11-04, after Codex 11a): task 12 COMPLETE. The closing-time cause is
   now CONFIRMED, not tentative: residuals load +0.2…+0.6 on the S&P 500 last-trading-day return
   of month t and −0.3…−0.6 on month t−1 (|t| 5–9, 27–44% of residual variance), scaling with

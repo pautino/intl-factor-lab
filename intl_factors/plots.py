@@ -128,3 +128,29 @@ def global_vs_local_bars(table: pd.DataFrame, title: str = "Adjusted R²: global
     ax.legend(fontsize=8, ncol=2, loc="upper center")
     fig.tight_layout()
     return fig
+
+
+def hedged_comparison(common: pd.DataFrame, gap_fit):
+    """Common-sample wealth and the HEFA-EFA gap versus the raw broad-dollar change."""
+    fig, (wealth_ax, gap_ax) = plt.subplots(1, 2, figsize=(11, 4))
+    wealth = (1 + common[["EFA", "HEFA"]]).cumprod()
+    for i, ticker in enumerate(wealth):
+        wealth_ax.plot(wealth.index.to_timestamp(), wealth[ticker], label=ticker, color=COLORS[i])
+    wealth_ax.set_title("Growth of $1, monthly total returns")
+    wealth_ax.set_ylabel("Wealth ($)")
+    wealth_ax.legend()
+    raw_usd = common["USD"]
+    gap = common["HEFA"] - common["EFA"]
+    gap_ax.scatter(raw_usd, gap, s=15, alpha=0.6, color=COLORS[1])
+    x = np.linspace(raw_usd.min(), raw_usd.max(), 100)
+    gap_ax.plot(x, gap_fit.params["const"] + gap_fit.params["USD"] * x, color="black", lw=1.2)
+    gap_ax.axhline(0, color="black", lw=0.5)
+    gap_ax.axvline(0, color="black", lw=0.5)
+    gap_ax.set_xlabel("Raw broad USD change (positive = stronger dollar)")
+    gap_ax.set_ylabel("HEFA − EFA monthly return")
+    gap_ax.set_title(f"Gap vs raw USD: β={gap_fit.params['USD']:.2f}, R²={gap_fit.rsquared:.2f}")
+    for axis in (gap_ax.xaxis, gap_ax.yaxis):
+        axis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"{v:.0%}"))
+    fig.suptitle(f"Currency hedging: {common.index.min()}–{common.index.max()} ({len(common)} months)")
+    fig.tight_layout()
+    return fig

@@ -4,7 +4,7 @@ import pytest
 
 from intl_factors.data import parse_french_csv
 from intl_factors.models import (FF6, align, attribution, contributions, fit,
-                                 nw_lags, quarterly_returns, quarterly_robustness,
+                                 hedged_comparison, nw_lags, quarterly_returns, quarterly_robustness,
                                  rolling_betas, stability_test)
 
 SAMPLE = """This file was created using the 202609 Bloomberg database.
@@ -157,3 +157,29 @@ def test_quarterly_returns_rejects_duplicate_months_and_no_complete_quarters():
         quarterly_returns(pd.concat([raw, raw.iloc[:1]]))
     with pytest.raises(ValueError, match="No complete calendar quarters"):
         quarterly_returns(raw.iloc[:2])
+
+
+def test_hedged_comparison_uses_common_months_and_raw_usd_for_unfunded_gap():
+    ret, factors = synthetic(n=240)
+    rng = np.random.default_rng(9)
+    usd = pd.Series(0.003 - 0.6 * factors["Mkt-RF"] + rng.normal(0, 0.02, len(ret)),
+                    index=ret.index, name="USD")
+    returns = pd.DataFrame({"EFA": ret, "HEFA": ret + 0.0015 + 1.2 * usd})
+    returns.loc[returns.index[:12], "HEFA"] = np.nan
+    common, table, gap_fit = hedged_comparison(returns, factors.iloc[:-2], usd.iloc[:-3])
+    assert len(common) == 225 and table["n_months"].eq(225).all()
+    assert common.index.min() == pd.Period("1986-01", "M")
+    assert common.index.max() == pd.Period("2004-09", "M")
+    assert gap_fit.cov_type == "HAC"
+    assert gap_fit.rsquared == pytest.approx(1.0)
+    assert table.loc["HEFA-EFA", "beta_USD"] == pytest.approx(1.2)
+    assert table.loc["HEFA-EFA", "alpha_ann"] == pytest.approx(0.0015 * 12)
+    assert table.loc["HEFA", "beta_USD"] - table.loc["EFA", "beta_USD"] == pytest.approx(1.2)
+    assert table.loc["HEFA", "corr_EFA"] == pytest.approx(common["HEFA"].corr(common["EFA"]))
+    assert table.loc["EFA", "ann_vol"] == pytest.approx(common["EFA"].std() * np.sqrt(12))
+    assert table.loc["EFA", "ann_return_geometric"] == pytest.approx(
+        (1 + common["EFA"]).prod() ** (12 / 225) - 1)
+    gap_row = table.loc["HEFA-EFA"]
+    assert gap_row["ann_mean_return"] == pytest.approx(
+        gap_row["alpha_ann"] + gap_row["raw_usd_mean_contribution_ann"])
+    assert np.isnan(gap_row["ann_return_geometric"])  # no standalone wealth return for a spread

@@ -207,3 +207,43 @@ def closing_time_test(resid: pd.Series, gap: pd.Series) -> dict:
             "gap_t-1": r.params["gap_t-1"], "gap_t-1_t": r.tvalues["gap_t-1"],
             "resid_r2_explained": r.rsquared,
             "ac1_before": e.autocorr(1), "ac1_after": r.resid.autocorr(1)}
+
+
+def hedged_comparison(returns: pd.DataFrame, factors: pd.DataFrame,
+                      usd: pd.Series) -> tuple[pd.DataFrame, pd.DataFrame, object]:
+    """EFA/HEFA statistics and HAC fits on one common monthly sample.
+
+    Fund excess returns use local FF6 plus orthogonalized USD. The self-financing
+    HEFA-EFA gap uses raw USD only, with no additional RF subtraction. Annual mean
+    returns and intercepts are arithmetic (x12); geometric annual returns are separate.
+    The gap intercept is descriptive, not an identified measure of interest-rate carry.
+    Returns (common input data, summary table, raw-USD gap regression).
+    """
+    common = returns[["EFA", "HEFA"]].join(factors[FF6 + ["RF"]], how="inner")
+    common = common.join(usd.rename("USD"), how="inner").dropna().sort_index()
+    gap = common["HEFA"] - common["EFA"]
+    results = {t: fit(align(common[t], common[FF6 + ["RF"]], common["USD"]),
+                      FF6 + ["USD"]) for t in ("EFA", "HEFA")}
+    gap_fit = fit(pd.DataFrame({"y": gap, "USD": common["USD"]}), ["USD"])
+    results["HEFA-EFA"] = gap_fit
+    rows = {}
+    for name, res in results.items():
+        ret = gap if name == "HEFA-EFA" else common[name]
+        ci = res.conf_int().loc["USD"]
+        rows[name] = {
+            "model": "raw USD only" if name == "HEFA-EFA" else "FF6+USD (orthogonalized)",
+            "start": str(common.index.min()), "end": str(common.index.max()),
+            "n_months": len(common), "ann_mean_return": ret.mean() * 12,
+            "ann_return_geometric": ((1 + ret).prod() ** (12 / len(ret)) - 1
+                                     if name != "HEFA-EFA" else np.nan),
+            "ann_vol": ret.std() * np.sqrt(12), "corr_EFA": ret.corr(common["EFA"]),
+            "corr_USD_raw": ret.corr(common["USD"]),
+            "alpha_ann": res.params["const"] * 12, "alpha_t": res.tvalues["const"],
+            "adj_r2": res.rsquared_adj,
+            **{f"beta_{c}": res.params.get(c, np.nan) for c in FF6 + ["USD"]},
+            "usd_t": res.tvalues["USD"], "usd_p": res.pvalues["USD"],
+            "usd_ci_low": ci.iloc[0], "usd_ci_high": ci.iloc[1],
+            "raw_usd_mean_contribution_ann": (res.params["USD"] * common["USD"].mean() * 12
+                                              if name == "HEFA-EFA" else np.nan),
+        }
+    return common, pd.DataFrame.from_dict(rows, orient="index").rename_axis("series"), gap_fit

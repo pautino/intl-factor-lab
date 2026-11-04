@@ -254,7 +254,49 @@ stability = pd.DataFrame(stab_rows).T
 display(stability)
 ''')
 
-md("## 12. Export tables")
+md(r"""
+## 12. Currency hedging: HEFA versus EFA
+[HEFA](https://www.ishares.com/us/literature/summary-prospectus/sp-ishares-currency-hedged-msci-eafe-etf-7-31.pdf)
+launched in January 2014 and combines EAFE equity exposure with monthly currency forwards.
+Compare it with unhedged EFA only on months shared by **both ETFs, Developed_ex_US factors, and USD**.
+The new pair download is cached separately; the original six-ETF sample is unchanged.
+
+Annualized mean return is arithmetic (×12); geometric annual return compounds monthly returns;
+volatility is monthly sample standard deviation ×√12. The table reports pairwise correlation and
+correlation with raw USD. Fund regressions use excess returns, local FF6 and orthogonalized USD,
+with HAC errors. Since the international market factor is already in USD, HEFA can have a more
+positive conditional USD beta: its hedge offsets currency exposure embedded in that market factor.
+
+For the monthly **HEFA − EFA** return gap, fit an intercept and **raw, unorthogonalized USD only**.
+No RF is subtracted from this self-financing gap. Its mean decomposes exactly into the intercept
+plus the raw-USD slope times the sample mean USD change. The intercept is not fund alpha or a
+separately identified estimate of hedge carry.
+
+**Covered interest parity (CIP).** With spot and forward rates quoted as USD per foreign currency,
+\(F_t/S_t=(1+r_{US,t}\Delta t)/(1+r_{foreign,t}\Delta t)\). Selling the foreign currency forward
+earns approximately \((r_{US}-r_{foreign})\Delta t\) in forward carry, while offsetting its realized
+spot appreciation. Thus HEFA − EFA combines removed FX moves and roughly the US-minus-currency-
+weighted foreign short-rate differential, plus basis, fees, hedge resets, and tracking differences.
+US rates above foreign rates imply positive hedge carry; the reverse implies a cost. No foreign-rate
+or forward dataset is used here, so the observed average gap cannot be quantitatively assigned to
+CIP carry alone. The broad trade-weighted USD index is also not the EAFE currency basket.
+[CIP and cross-currency basis: BIS](https://www.bis.org/publications/qr-201609/covered-interest-parity-lost-understanding-cross-currency-basis).
+""")
+code('''
+hedge_returns = data.etf_returns(["EFA", "HEFA"])
+hedge_common, hedge_summary, hedge_gap_fit = models.hedged_comparison(
+    hedge_returns, factors["Developed_ex_US"], usd)
+with pd.option_context("display.max_columns", None):
+    display(hedge_summary[["start", "end", "n_months", "ann_mean_return",
+                           "ann_return_geometric", "ann_vol", "corr_EFA", "corr_USD_raw"]])
+    display(hedge_summary[["model", *[f"beta_{c}" for c in models.FF6 + ["USD"]],
+                           "usd_t", "usd_ci_low", "usd_ci_high", "alpha_ann", "alpha_t", "adj_r2"]])
+    display(hedge_summary.loc[["HEFA-EFA"],
+                             ["ann_mean_return", "alpha_ann", "raw_usd_mean_contribution_ann"]])
+save(plots.hedged_comparison(hedge_common, hedge_gap_fit), "08_hedged_vs_unhedged")
+''')
+
+md("## 13. Export tables")
 code('''
 summary.to_csv(TAB_DIR / "model_summary.csv")
 pd.concat(coefs, names=["ETF", "term"]).to_csv(TAB_DIR / "coefficients_ff6_usd.csv")
@@ -263,11 +305,12 @@ attr.to_csv(TAB_DIR / "attribution.csv")
 diag.to_csv(TAB_DIR / "residual_diagnostics.csv")
 stability.to_csv(TAB_DIR / "stability.csv")
 quarterly_robustness.to_csv(TAB_DIR / "quarterly_robustness.csv")
+hedge_summary.to_csv(TAB_DIR / "hedged_vs_unhedged.csv")
 print("Saved tables to", TAB_DIR, "and figures to", FIG_DIR)
 ''')
 
 md("""
-## 13. Limitations
+## 14. Limitations
 - French factors are built from Bloomberg stock data and are not the MSCI indices the ETFs track
   (e.g. `Developed_ex_US` includes Canada, MSCI EAFE does not). Part of each alpha is index mismatch.
 - ETF returns are net of fees and foreign dividend withholding taxes; factor returns are not.
