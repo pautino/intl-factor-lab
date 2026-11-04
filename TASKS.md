@@ -49,7 +49,13 @@ Finish with five questions a professor or interviewer would likely ask, with mod
 
 - Active claim (Codex, 2026-11-04): task 14. Editing only `AGENTS.md` / `TASKS.md` for
   attribution policy and coordination, and preparing Git metadata on a separate cleanup branch.
-  Publishing requires a force push; GitHub DNS remains unavailable in this shell.
+  Prepared `cleanup/remove-claude-coauthors`: removes 11 Claude/Anthropic co-author trailers;
+  every historical file tree, author, committer, and timestamp is preserved. Local backup:
+  `backup/before-claude-credit-removal-20261104`; audit map: `.git/claude-credit-rewrite.json`.
+  AGENTS.md now prevents future Claude co-author trailers. Current main retains its original
+  history. Publishing requires a force push with an explicit lease on the old remote main;
+  GitHub DNS remains unavailable in this shell, so the public repository is unchanged.
+  Task 14 stays open until the cleaned history is published and contributor credit is checked.
 - Status (Claude Code, 2026-11-04): task 11c COMPLETE as a Russia case study (user's choice).
   Notebook §13, README finding 9 + resume bullet. Data: MOEX ISS (MCFTR, IMOEX, RTSI, USD/RUB traded
   close <Jun 2013 then evening fixing "mc"), FRED Brent. All cached + committed. Do NOT use Yahoo
