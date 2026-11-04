@@ -27,14 +27,15 @@ from pathlib import Path
 
 REPO_URL = "https://github.com/pautino/intl-factor-lab.git"
 
-if "google.colab" in sys.modules and not Path("intl_factors").exists():
-    if Path("intl-factor-lab").exists():
-        # refresh a copy left by an earlier session; it only holds regenerated outputs
-        subprocess.run("git -C intl-factor-lab fetch -q && git -C intl-factor-lab reset -q --hard origin/main",
+if "google.colab" in sys.modules:
+    repo = Path("/content/intl-factor-lab")  # absolute: a reconnected session may already be inside it
+    if repo.exists():
+        # always refresh a copy left by an earlier session; it only holds regenerated outputs
+        subprocess.run(f"git -C {repo} fetch -q && git -C {repo} reset -q --hard origin/main",
                        shell=True, check=True)
     else:
-        subprocess.run(["git", "clone", "-q", REPO_URL, "intl-factor-lab"], check=True)
-    os.chdir("intl-factor-lab")
+        subprocess.run(["git", "clone", "-q", REPO_URL, str(repo)], check=True)
+    os.chdir(repo)
     # Colab preinstalls these; install only if missing (upgrading can break preloaded packages)
     for pkg in ("yfinance", "statsmodels"):
         try:
@@ -50,7 +51,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from IPython.display import display
 
+import importlib
 from intl_factors import data, models, plots
+for _module in (data, models, plots):
+    importlib.reload(_module)  # pick up code pulled into an already-running session
 
 pd.set_option("display.float_format", "{:.3f}".format)
 ''')
