@@ -73,6 +73,18 @@ def test_stability_test_detects_break_and_not_absent_one():
     assert stability_test(align(ret, f), FF6, "2005-01")[2] > 0.01
 
 
+def test_orthogonal_usd_keeps_usd_beta_and_fit():
+    ret, f = synthetic()
+    rng = np.random.default_rng(5)
+    usd = pd.Series(-0.6 * f["Mkt-RF"] + rng.normal(0, 0.02, len(f)), index=f.index, name="USD")
+    raw = fit(align(ret, f, usd, orthogonalize_usd=False), FF6 + ["USD"])
+    d = align(ret, f, usd)
+    orth = fit(d, FF6 + ["USD"])
+    assert abs(d["USD"].corr(d["Mkt-RF"])) < 1e-10
+    assert orth.params["USD"] == pytest.approx(raw.params["USD"])
+    assert orth.rsquared == pytest.approx(raw.rsquared)
+
+
 def test_nw_lags():
     assert nw_lags(100) == 4
     assert nw_lags(240) == 4

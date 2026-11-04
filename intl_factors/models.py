@@ -17,11 +17,23 @@ FF6 = ["Mkt-RF", "SMB", "HML", "RMW", "CMA", "MOM"]
 MODELS = {"CAPM": ["Mkt-RF"], "FF6": FF6, "FF6+USD": FF6 + ["USD"]}
 
 
-def align(ret: pd.Series, factors: pd.DataFrame, usd: pd.Series | None = None) -> pd.DataFrame:
-    """Factor columns + excess return ``y`` on common months with no missing values."""
+def align(ret: pd.Series, factors: pd.DataFrame, usd: pd.Series | None = None,
+          orthogonalize_usd: bool = True) -> pd.DataFrame:
+    """Factor columns + excess return ``y`` on common months with no missing values.
+
+    With ``orthogonalize_usd`` the USD column is replaced by its residual from a regression
+    on the regional Mkt-RF (full factor sample, descriptive). The dollar is ~-0.8 correlated
+    with emerging-market returns in USD, so raw Mkt and USD betas trade off against each
+    other; the residual keeps the USD beta and R^2 unchanged while Mkt-RF keeps the
+    dollar move that travels with the market.
+    """
     df = factors.copy()
     if usd is not None:
         df = df.join(usd, how="inner")
+        if orthogonalize_usd:
+            ok = df[["Mkt-RF", "USD"]].dropna().index
+            proj = sm.OLS(df.loc[ok, "USD"], sm.add_constant(df.loc[ok, "Mkt-RF"])).fit()
+            df.loc[ok, "USD"] = proj.resid
     df["y"] = ret.reindex(df.index) - df["RF"]
     return df.dropna()
 
