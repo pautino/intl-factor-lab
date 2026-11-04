@@ -41,11 +41,17 @@ After each part, ask me two short questions to check I understood, and correct m
 Finish with five questions a professor or interviewer would likely ask, with model answers.
 ```
 
-14. [codex] Remove Claude co-author credit from published commit messages; prepare a local
+14. [x] Remove Claude co-author credit from published commit messages; prepare a local
     backup and cleaned branch, verify file trees are preserved, then publish the history rewrite.
 
 ## Handoff notes
 (Updated by the agent that stops working. Read this first.)
+
+- Status (Claude Code, 2026-11-04): task 14 COMPLETE, per the user's choice. Published history has
+  no Claude/Anthropic co-author trailers AND every commit is authored "Alexander Papoyan
+  <73597411+pautino@users.noreply.github.com>" (repo git config set to this too). This SUPERSEDES
+  Codex's `cleanup/remove-claude-coauthors` branch (which kept the old "dot tot" author):
+  do not push that branch or any backup branch. Files are byte-identical to before. Backups stay local only.
 
 - Active claim (Codex, 2026-11-04): task 14. Editing only `AGENTS.md` / `TASKS.md` for
   attribution policy and coordination, and preparing Git metadata on a separate cleanup branch.
