@@ -15,13 +15,16 @@ Legend: `[ ]` open, `[claude]`/`[codex]` claimed, `[x]` done.
        `scripts/build_notebook.py` (setup cell), rebuild + re-execute the notebook, commit, push.
 10. [ ] Test the notebook in real Colab (fresh runtime) after step 9; fix anything Colab-specific.
 11. [ ] Optional upgrades (pick with the user; see README §15). Best value first:
-       a. Quarterly-return robustness table (should remove the −0.3 residual autocorrelation).
+       a. [codex] Quarterly-return robustness table (should remove the −0.3 residual autocorrelation).
        b. Hedged vs unhedged pair (HEFA vs EFA) to measure currency hedging directly.
        c. Add the user's home-country ETF and more EM countries (INDA, FXI, EWW, EZA).
 
 ## Handoff notes
 (Updated by the agent that stops working. Read this first.)
 
+- Active claim (Codex, 2026-11-04): task 11a. Editing `scripts/build_notebook.py`,
+  `intl_factors/models.py`, `tests/test_models.py`, `README.md`, the generated notebook,
+  and generated reports for the quarterly robustness check.
 - Status (Claude Code, 2026-11-04): core project COMPLETE. 7/7 tests pass, notebook executes
   end to end, README results match `reports/tables/*.csv`. Remaining: tasks 9–11.
 - How to verify: `.venv/bin/python -m pytest -q`, then
